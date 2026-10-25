@@ -4,7 +4,7 @@ node version manager -- now this will handle node fifferently for diff projects 
 
 ### why docker
 
-images concurent run 
+images concurent run
 
 ### why package-lock.json
 
