@@ -1,4 +1,5 @@
 import express from "express";
+import type { z } from "zod";
 import {
   createExpense,
   deleteExpense,
@@ -6,7 +7,7 @@ import {
   listExpenses,
   replaceExpense,
 } from "../services/expenseService.js";
-
+import { expenseSchema } from "../schemas/expense.js";
 export const expensesRouter = express.Router();
 
 function parseExpenseId(value: string): number | undefined {
@@ -16,6 +17,12 @@ function parseExpenseId(value: string): number | undefined {
   }
 
   return expenseId;
+}
+
+function sendValidationError(res: express.Response, error: z.ZodError) {
+  res
+    .status(400)
+    .json({ error: "Invalid expense data", details: error.issues });
 }
 
 expensesRouter.get("/", (_req, res) => {
@@ -39,7 +46,14 @@ expensesRouter.get("/:id", (req, res) => {
 });
 
 expensesRouter.post("/", (req, res) => {
-  const expense = createExpense(req.body);
+  const parseResult = expenseSchema.safeParse(req.body);
+
+  if (!parseResult.success) {
+    sendValidationError(res, parseResult.error);
+    return;
+  }
+
+  const expense = createExpense(parseResult.data);
   res.status(201).json(expense);
 });
 
@@ -50,7 +64,13 @@ expensesRouter.put("/:id", (req, res) => {
     return;
   }
 
-  const expense = replaceExpense(expenseId, req.body);
+  const parseResult = expenseSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    sendValidationError(res, parseResult.error);
+    return;
+  }
+
+  const expense = replaceExpense(expenseId, parseResult.data);
   if (!expense) {
     res.status(404).json({ error: "Expense not found" });
     return;

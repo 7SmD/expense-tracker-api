@@ -1,9 +1,8 @@
-export interface Expense {
-  id: number;
-  [key: string]: unknown;
-}
+import type { z } from "zod";
+import type { expenseSchema } from "../schemas/expense.js";
 
-export type ExpenseData = Record<string, unknown>;
+export type ExpenseData = z.infer<typeof expenseSchema>;
+export type Expense = ExpenseData & { id: number };
 
 const expenses: Expense[] = [];
 let nextExpenseId = 1;
