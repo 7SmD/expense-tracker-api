@@ -4,11 +4,18 @@ import { Prisma } from "../generated/prisma/client.js";
 
 import type { expenseSchema } from "../schemas/expense.js";
 
+import type { Expense } from "../generated/prisma/client.js";
+
 export type ExpenseData = z.infer<typeof expenseSchema>;
-export type Expense = ExpenseData & { id: number };
+
+function toResponse(expense: Expense) {
+  return { ...expense, date: expense.date.toISOString().slice(0, 10) };
+}
 
 function isPrismaError(error: unknown, code: string): boolean {
-  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === code;
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code
+  );
 }
 
 export class InvalidCategoryError extends Error {
@@ -18,16 +25,17 @@ export class InvalidCategoryError extends Error {
 }
 
 export async function listExpenses() {
-  return prisma.expense.findMany();
+  return prisma.expense.findMany().then((expenses) => expenses.map(toResponse));
 }
 
 export async function getExpense(id: number) {
-  return prisma.expense.findUnique({ where: { id } });
+  const expense = await prisma.expense.findUnique({ where: { id } });
+  return expense === null ? null : toResponse(expense);
 }
 
 export async function createExpense(data: ExpenseData) {
   try {
-    return await prisma.expense.create({
+    const expense = await prisma.expense.create({
       data: {
         amount: data.amount,
         description: data.description,
@@ -35,6 +43,7 @@ export async function createExpense(data: ExpenseData) {
         categoryId: data.categoryId,
       },
     });
+    return toResponse(expense);
   } catch (error) {
     if (isPrismaError(error, "P2003")) {
       throw new InvalidCategoryError();
@@ -45,7 +54,7 @@ export async function createExpense(data: ExpenseData) {
 
 export async function replaceExpense(id: number, data: ExpenseData) {
   try {
-    return await prisma.expense.update({
+    const expense = await prisma.expense.update({
       where: { id },
       data: {
         amount: data.amount,
@@ -54,9 +63,13 @@ export async function replaceExpense(id: number, data: ExpenseData) {
         categoryId: data.categoryId,
       },
     });
+    return toResponse(expense);
   } catch (error) {
     if (isPrismaError(error, "P2025")) {
       return null;
+    }
+    if (isPrismaError(error, "P2003")) {
+      throw new InvalidCategoryError();
     }
     throw error;
   }

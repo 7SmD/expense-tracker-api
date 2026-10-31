@@ -4,10 +4,12 @@ import {
   createExpense,
   deleteExpense,
   getExpense,
+  InvalidCategoryError,
   listExpenses,
   replaceExpense,
 } from "../services/expenseService.js";
 import { expenseSchema } from "../schemas/expense.js";
+
 export const expensesRouter = express.Router();
 
 function parseExpenseId(value: string): number | undefined {
@@ -53,12 +55,20 @@ expensesRouter.post("/", async (req, res) => {
     return;
   }
 
-  const expense = await createExpense(parseResult.data);
-  res.status(201).json(expense);
+  try {
+    const expense = await createExpense(parseResult.data);
+    res.status(201).json(expense);
+  } catch (error) {
+    if (error instanceof InvalidCategoryError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    throw error;
+  }
 });
 
-expensesRouter.put("/:id", async(req, res) => {
-  const expenseId =  parseExpenseId(req.params.id);
+expensesRouter.put("/:id", async (req, res) => {
+  const expenseId = parseExpenseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;
@@ -70,17 +80,24 @@ expensesRouter.put("/:id", async(req, res) => {
     return;
   }
 
-  const expense = await replaceExpense(expenseId, parseResult.data);
-  if (!expense) {
-    res.status(404).json({ error: "Expense not found" });
-    return;
+  try {
+    const expense = await replaceExpense(expenseId, parseResult.data);
+    if (!expense) {
+      res.status(404).json({ error: "Expense not found" });
+      return;
+    }
+    res.json(expense);
+  } catch (error) {
+    if (error instanceof InvalidCategoryError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    throw error;
   }
-
-  res.json(expense);
 });
 
 expensesRouter.delete("/:id", async (req, res) => {
-  const expenseId = await parseExpenseId(req.params.id);
+  const expenseId =  parseExpenseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;
