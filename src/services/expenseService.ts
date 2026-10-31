@@ -1,46 +1,75 @@
 import type { z } from "zod";
+import { prisma } from "../lib/prisma.js";
+import { Prisma } from "../generated/prisma/client.js";
+
 import type { expenseSchema } from "../schemas/expense.js";
 
 export type ExpenseData = z.infer<typeof expenseSchema>;
 export type Expense = ExpenseData & { id: number };
 
-const expenses: Expense[] = [];
-let nextExpenseId = 1;
-
-export function listExpenses(): Expense[] {
-  return [...expenses];
+function isPrismaError(error: unknown, code: string): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === code;
 }
 
-export function getExpense(id: number): Expense | undefined {
-  return expenses.find((expense) => expense.id === id);
-}
-
-export function createExpense(data: ExpenseData): Expense {
-  const expense = { ...data, id: nextExpenseId++ };
-  expenses.push(expense);
-  return expense;
-}
-
-export function replaceExpense(
-  id: number,
-  data: ExpenseData,
-): Expense | undefined {
-  const expenseIndex = expenses.findIndex((expense) => expense.id === id);
-  if (expenseIndex === -1) {
-    return undefined;
+export class InvalidCategoryError extends Error {
+  constructor() {
+    super("Category does not exist");
   }
-
-  const expense = { ...data, id };
-  expenses[expenseIndex] = expense;
-  return expense;
 }
 
-export function deleteExpense(id: number): boolean {
-  const expenseIndex = expenses.findIndex((expense) => expense.id === id);
-  if (expenseIndex === -1) {
-    return false;
-  }
+export async function listExpenses() {
+  return prisma.expense.findMany();
+}
 
-  expenses.splice(expenseIndex, 1);
-  return true;
+export async function getExpense(id: number) {
+  return prisma.expense.findUnique({ where: { id } });
+}
+
+export async function createExpense(data: ExpenseData) {
+  try {
+    return await prisma.expense.create({
+      data: {
+        amount: data.amount,
+        description: data.description,
+        date: new Date(data.date),
+        categoryId: data.categoryId,
+      },
+    });
+  } catch (error) {
+    if (isPrismaError(error, "P2003")) {
+      throw new InvalidCategoryError();
+    }
+    throw error;
+  }
+}
+
+export async function replaceExpense(id: number, data: ExpenseData) {
+  try {
+    return await prisma.expense.update({
+      where: { id },
+      data: {
+        amount: data.amount,
+        description: data.description,
+        date: new Date(data.date),
+        categoryId: data.categoryId,
+      },
+    });
+  } catch (error) {
+    if (isPrismaError(error, "P2025")) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function deleteExpense(id: number): Promise<boolean> {
+  try {
+    await prisma.expense.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    if (isPrismaError(error, "P2025")) {
+      return false;
+    }
+    throw error;
+  }
 }

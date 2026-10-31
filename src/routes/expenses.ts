@@ -25,18 +25,18 @@ function sendValidationError(res: express.Response, error: z.ZodError) {
     .json({ error: "Invalid expense data", details: error.issues });
 }
 
-expensesRouter.get("/", (_req, res) => {
-  res.json(listExpenses());
+expensesRouter.get("/", async (_req, res) => {
+  res.json(await listExpenses());
 });
 
-expensesRouter.get("/:id", (req, res) => {
+expensesRouter.get("/:id", async (req, res) => {
   const expenseId = parseExpenseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;
   }
 
-  const expense = getExpense(expenseId);
+  const expense = await getExpense(expenseId);
   if (!expense) {
     res.status(404).json({ error: "Expense not found" });
     return;
@@ -45,7 +45,7 @@ expensesRouter.get("/:id", (req, res) => {
   res.json(expense);
 });
 
-expensesRouter.post("/", (req, res) => {
+expensesRouter.post("/", async (req, res) => {
   const parseResult = expenseSchema.safeParse(req.body);
 
   if (!parseResult.success) {
@@ -53,12 +53,12 @@ expensesRouter.post("/", (req, res) => {
     return;
   }
 
-  const expense = createExpense(parseResult.data);
+  const expense = await createExpense(parseResult.data);
   res.status(201).json(expense);
 });
 
-expensesRouter.put("/:id", (req, res) => {
-  const expenseId = parseExpenseId(req.params.id);
+expensesRouter.put("/:id", async(req, res) => {
+  const expenseId =  parseExpenseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;
@@ -70,7 +70,7 @@ expensesRouter.put("/:id", (req, res) => {
     return;
   }
 
-  const expense = replaceExpense(expenseId, parseResult.data);
+  const expense = await replaceExpense(expenseId, parseResult.data);
   if (!expense) {
     res.status(404).json({ error: "Expense not found" });
     return;
@@ -79,14 +79,14 @@ expensesRouter.put("/:id", (req, res) => {
   res.json(expense);
 });
 
-expensesRouter.delete("/:id", (req, res) => {
-  const expenseId = parseExpenseId(req.params.id);
+expensesRouter.delete("/:id", async (req, res) => {
+  const expenseId = await parseExpenseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;
   }
 
-  if (!deleteExpense(expenseId)) {
+  if (!(await deleteExpense(expenseId))) {
     res.status(404).json({ error: "Expense not found" });
     return;
   }
