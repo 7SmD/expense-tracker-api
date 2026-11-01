@@ -2,6 +2,29 @@
 
 Backend for tracking expenses. Work in progress.
 
+## Getting started
+
+**Prerequisites:** Node 22 and Docker Desktop.
+
+1. Start Postgres:
+   ```bash
+   docker run --name expense-db \
+     -e POSTGRES_PASSWORD=devpassword \
+     -e POSTGRES_DB=expense_api \
+     -p 5432:5432 \
+     -v expense-pgdata:/var/lib/postgresql/data \
+     -d postgres:17
+   ```
+   *If the container name or port is taken, see `docker ps -a`.*
+2. Configure the environment: `cp .env.example .env`
+3. Install dependencies: `npm install`
+4. Create the tables: `npx prisma migrate deploy`
+5. Generate the Prisma client: `npx prisma generate`
+6. Start the API: `npm run dev`
+7. Check it: `curl localhost:3000/health`
+
+Next time, just run `docker start expense-db` and `npm run dev`.
+
 ## Endpoints
 
 | Method | URL | What it does | Success | Errors |
