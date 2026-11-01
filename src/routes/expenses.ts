@@ -10,6 +10,7 @@ import {
 } from "../services/expenseService.js";
 import { expenseSchema } from "../schemas/expense.js";
 import { parseId } from "../lib/parseId.js";
+import { expenseQuerySchema } from "../schemas/expenseQuery.js";
 
 export const expensesRouter = express.Router();
 
@@ -20,7 +21,13 @@ function sendValidationError(res: express.Response, error: z.ZodError) {
 }
 
 expensesRouter.get("/", async (_req, res) => {
-  res.json(await listExpenses());
+  const parseResult = expenseQuerySchema.safeParse(_req.query);
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid expense query parameters", details: parseResult.error.issues });
+    return;
+  }
+
+  res.json(await listExpenses(parseResult.data));
 });
 
 expensesRouter.get("/:id", async (req, res) => {

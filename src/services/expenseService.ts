@@ -3,8 +3,12 @@ import { prisma } from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 
 import type { expenseSchema } from "../schemas/expense.js";
-
 import type { Expense } from "../generated/prisma/client.js";
+
+type ExpenseFilters = {
+  month?: string | undefined;
+  categoryId?: number | undefined;
+};
 
 export type ExpenseData = z.infer<typeof expenseSchema>;
 
@@ -24,8 +28,30 @@ export class InvalidCategoryError extends Error {
   }
 }
 
-export async function listExpenses() {
-  return prisma.expense.findMany().then((expenses) => expenses.map(toResponse));
+export async function listExpenses(filters: ExpenseFilters = {}) {
+  const where: Prisma.ExpenseWhereInput = {};
+
+  if (filters.categoryId !== undefined) {
+    where.categoryId = filters.categoryId;
+  }
+
+  if (filters.month !== undefined) {
+    const [year, month] = filters.month.split("-").map(Number);
+    if (year === undefined || month === undefined) {
+      throw new Error("Invalid month");
+    }
+    // start = first day of that month, end = first day of the NEXT month
+    where.date = {
+      gte: new Date(Date.UTC(year, month - 1, 1)),
+      lt: new Date(Date.UTC(year, month, 1)),
+    };
+  }
+
+  const expenses = await prisma.expense.findMany({
+    where,
+    orderBy: [{ date: "desc" }, { id: "desc" }],
+  });
+  return expenses.map(toResponse);
 }
 
 export async function getExpense(id: number) {
