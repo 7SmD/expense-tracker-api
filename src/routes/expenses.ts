@@ -9,17 +9,9 @@ import {
   replaceExpense,
 } from "../services/expenseService.js";
 import { expenseSchema } from "../schemas/expense.js";
+import { parseId } from "../lib/parseId.js";
 
 export const expensesRouter = express.Router();
-
-function parseExpenseId(value: string): number | undefined {
-  const expenseId = Number(value);
-  if (!Number.isSafeInteger(expenseId) || expenseId <= 0) {
-    return undefined;
-  }
-
-  return expenseId;
-}
 
 function sendValidationError(res: express.Response, error: z.ZodError) {
   res
@@ -32,7 +24,7 @@ expensesRouter.get("/", async (_req, res) => {
 });
 
 expensesRouter.get("/:id", async (req, res) => {
-  const expenseId = parseExpenseId(req.params.id);
+  const expenseId = parseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;
@@ -68,7 +60,7 @@ expensesRouter.post("/", async (req, res) => {
 });
 
 expensesRouter.put("/:id", async (req, res) => {
-  const expenseId = parseExpenseId(req.params.id);
+  const expenseId = parseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;
@@ -97,7 +89,7 @@ expensesRouter.put("/:id", async (req, res) => {
 });
 
 expensesRouter.delete("/:id", async (req, res) => {
-  const expenseId =  parseExpenseId(req.params.id);
+  const expenseId = parseId(req.params.id);
   if (expenseId === undefined) {
     res.status(400).json({ error: "Invalid expense id" });
     return;

@@ -2,6 +2,7 @@ import express from "express";
 import type { NextFunction, Request, Response } from "express";
 
 import { expensesRouter } from "./routes/expenses.js";
+import { categoriesRouter } from "./routes/categories.js";
 
 const app = express();
 
@@ -11,11 +12,11 @@ const PORT = 3000;
 
 app.use(express.json());
 app.use("/expenses", expensesRouter);
+app.use("/categories", categoriesRouter);
 
 app.get(`/health`, (req, res) => {
   res.json({ status: "ok" });
 });
-
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Route not found" });
