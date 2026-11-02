@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { expensesRouter } from "./routes/expenses.js";
 import { categoriesRouter } from "./routes/categories.js";
+import { authRouter } from "./routes/auth.js";
 
 const app = express();
 
@@ -13,6 +14,7 @@ const PORT = 3000;
 app.use(express.json());
 app.use("/expenses", expensesRouter);
 app.use("/categories", categoriesRouter);
+app.use("/auth", authRouter);
 
 app.get(`/health`, (req, res) => {
   res.json({ status: "ok" });

@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { prisma } from "../lib/prisma.js";
+import { isPrismaError } from "../lib/prismaError.js";
 import { Prisma } from "../generated/prisma/client.js";
 
 import type { expenseSchema } from "../schemas/expense.js";
@@ -14,12 +15,6 @@ export type ExpenseData = z.infer<typeof expenseSchema>;
 
 function toResponse(expense: Expense) {
   return { ...expense, date: expense.date.toISOString().slice(0, 10) };
-}
-
-function isPrismaError(error: unknown, code: string): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code
-  );
 }
 
 export class InvalidCategoryError extends Error {

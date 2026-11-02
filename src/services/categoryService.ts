@@ -1,16 +1,10 @@
 import type { z } from "zod";
 import { prisma } from "../lib/prisma.js";
-import { Prisma } from "../generated/prisma/client.js";
+import { isPrismaError } from "../lib/prismaError.js";
 
 import type { categorySchema } from "../schemas/category.js";
 
 export type CategoryData = z.infer<typeof categorySchema>;
-
-function isPrismaError(error: unknown, code: string): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code
-  );
-}
 
 export class DuplicateCategoryError extends Error {
   constructor() {
