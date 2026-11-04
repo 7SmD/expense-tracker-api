@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from "express";
 import { expensesRouter } from "./routes/expenses.js";
 import { categoriesRouter } from "./routes/categories.js";
 import { authRouter } from "./routes/auth.js";
+import { requireAuth } from "./middleware/requireAuth.js";
 
 const app = express();
 
@@ -12,8 +13,8 @@ app.disable("x-powered-by");
 const PORT = 3000;
 
 app.use(express.json());
-app.use("/expenses", expensesRouter);
-app.use("/categories", categoriesRouter);
+app.use("/expenses", requireAuth, expensesRouter);
+app.use("/categories", requireAuth, categoriesRouter);
 app.use("/auth", authRouter);
 
 app.get(`/health`, (req, res) => {

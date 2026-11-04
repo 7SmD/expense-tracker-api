@@ -11,6 +11,7 @@ import {
 import { expenseSchema } from "../schemas/expense.js";
 import { parseId } from "../lib/parseId.js";
 import { expenseQuerySchema } from "../schemas/expenseQuery.js";
+import { getUserId } from "../middleware/requireAuth.js";
 
 export const expensesRouter = express.Router();
 
@@ -23,7 +24,10 @@ function sendValidationError(res: express.Response, error: z.ZodError) {
 expensesRouter.get("/", async (_req, res) => {
   const parseResult = expenseQuerySchema.safeParse(_req.query);
   if (!parseResult.success) {
-    res.status(400).json({ error: "Invalid expense query parameters", details: parseResult.error.issues });
+    res.status(400).json({
+      error: "Invalid expense query parameters",
+      details: parseResult.error.issues,
+    });
     return;
   }
 
@@ -55,7 +59,7 @@ expensesRouter.post("/", async (req, res) => {
   }
 
   try {
-    const expense = await createExpense(parseResult.data);
+    const expense = await createExpense(parseResult.data, getUserId(res));
     res.status(201).json(expense);
   } catch (error) {
     if (error instanceof InvalidCategoryError) {

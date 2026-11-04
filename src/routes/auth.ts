@@ -17,9 +17,7 @@ function sendValidationError(
   error: z.ZodError,
   message: string,
 ) {
-  res
-    .status(400)
-    .json({ error: message, details: error.issues });
+  res.status(400).json({ error: message, details: error.issues });
 }
 
 authRouter.post("/register", async (req, res) => {

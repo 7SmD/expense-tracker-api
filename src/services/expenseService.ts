@@ -54,7 +54,7 @@ export async function getExpense(id: number) {
   return expense === null ? null : toResponse(expense);
 }
 
-export async function createExpense(data: ExpenseData) {
+export async function createExpense(data: ExpenseData, userId: number) {
   try {
     const expense = await prisma.expense.create({
       data: {
@@ -62,6 +62,7 @@ export async function createExpense(data: ExpenseData) {
         description: data.description,
         date: new Date(data.date),
         categoryId: data.categoryId,
+        userId: userId,
       },
     });
     return toResponse(expense);

@@ -1,13 +1,8 @@
 import "dotenv/config";
 import jwt from "jsonwebtoken";
+import { requireEnv } from "./env.js";
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} environment variable is not set`);
-  }
-  return value;
-}
+
 
 const secret = requireEnv("JWT_SECRET");
 

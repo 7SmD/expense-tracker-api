@@ -26,7 +26,10 @@ model Expense {
   categoryId  Int
   category    Category @relation(fields: categoryId, references: id)
   createdAt   DateTime @default(now())
+  userId      Int
+  user        User @relation(fields: [userId], references: [id])
 
+  @@index([userId])
   @@index([date])
   @@index([categoryId])
 }
@@ -36,4 +39,5 @@ model User {
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
+  expenses     Expense[]
 }
