@@ -21,8 +21,8 @@ function sendValidationError(res: express.Response, error: z.ZodError) {
     .json({ error: "Invalid expense data", details: error.issues });
 }
 
-expensesRouter.get("/", async (_req, res) => {
-  const parseResult = expenseQuerySchema.safeParse(_req.query);
+expensesRouter.get("/", async (req, res) => {
+  const parseResult = expenseQuerySchema.safeParse(req.query);
   if (!parseResult.success) {
     res.status(400).json({
       error: "Invalid expense query parameters",
@@ -31,7 +31,7 @@ expensesRouter.get("/", async (_req, res) => {
     return;
   }
 
-  res.json(await listExpenses(parseResult.data));
+  res.json(await listExpenses(getUserId(res), parseResult.data));
 });
 
 expensesRouter.get("/:id", async (req, res) => {
@@ -41,7 +41,7 @@ expensesRouter.get("/:id", async (req, res) => {
     return;
   }
 
-  const expense = await getExpense(expenseId);
+  const expense = await getExpense(getUserId(res), expenseId);
   if (!expense) {
     res.status(404).json({ error: "Expense not found" });
     return;
@@ -59,7 +59,7 @@ expensesRouter.post("/", async (req, res) => {
   }
 
   try {
-    const expense = await createExpense(parseResult.data, getUserId(res));
+    const expense = await createExpense(getUserId(res), parseResult.data);
     res.status(201).json(expense);
   } catch (error) {
     if (error instanceof InvalidCategoryError) {
@@ -84,7 +84,11 @@ expensesRouter.put("/:id", async (req, res) => {
   }
 
   try {
-    const expense = await replaceExpense(expenseId, parseResult.data);
+    const expense = await replaceExpense(
+      getUserId(res),
+      expenseId,
+      parseResult.data,
+    );
     if (!expense) {
       res.status(404).json({ error: "Expense not found" });
       return;
@@ -106,7 +110,7 @@ expensesRouter.delete("/:id", async (req, res) => {
     return;
   }
 
-  if (!(await deleteExpense(expenseId))) {
+  if (!(await deleteExpense(getUserId(res), expenseId))) {
     res.status(404).json({ error: "Expense not found" });
     return;
   }

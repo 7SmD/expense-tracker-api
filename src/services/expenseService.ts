@@ -23,8 +23,11 @@ export class InvalidCategoryError extends Error {
   }
 }
 
-export async function listExpenses(filters: ExpenseFilters = {}) {
-  const where: Prisma.ExpenseWhereInput = {};
+export async function listExpenses(
+  userId: number,
+  filters: ExpenseFilters = {},
+) {
+  const where: Prisma.ExpenseWhereInput = { userId };
 
   if (filters.categoryId !== undefined) {
     where.categoryId = filters.categoryId;
@@ -49,12 +52,12 @@ export async function listExpenses(filters: ExpenseFilters = {}) {
   return expenses.map(toResponse);
 }
 
-export async function getExpense(id: number) {
-  const expense = await prisma.expense.findUnique({ where: { id } });
+export async function getExpense(userId: number, id: number) {
+  const expense = await prisma.expense.findFirst({ where: { id, userId } });
   return expense === null ? null : toResponse(expense);
 }
 
-export async function createExpense(data: ExpenseData, userId: number) {
+export async function createExpense(userId: number, data: ExpenseData) {
   try {
     const expense = await prisma.expense.create({
       data: {
@@ -74,10 +77,14 @@ export async function createExpense(data: ExpenseData, userId: number) {
   }
 }
 
-export async function replaceExpense(id: number, data: ExpenseData) {
+export async function replaceExpense(
+  userId: number,
+  id: number,
+  data: ExpenseData,
+) {
   try {
     const expense = await prisma.expense.update({
-      where: { id },
+      where: { id, userId },
       data: {
         amount: data.amount,
         description: data.description,
@@ -97,9 +104,12 @@ export async function replaceExpense(id: number, data: ExpenseData) {
   }
 }
 
-export async function deleteExpense(id: number): Promise<boolean> {
+export async function deleteExpense(
+  userId: number,
+  id: number,
+): Promise<boolean> {
   try {
-    await prisma.expense.delete({ where: { id } });
+    await prisma.expense.delete({ where: { id, userId } });
     return true;
   } catch (error) {
     if (isPrismaError(error, "P2025")) {
