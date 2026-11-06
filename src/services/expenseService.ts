@@ -9,6 +9,8 @@ import type { Expense } from "../generated/prisma/client.js";
 type ExpenseFilters = {
   month?: string | undefined;
   categoryId?: number | undefined;
+  page: number;
+  limit: number;
 };
 
 export type ExpenseData = z.infer<typeof expenseSchema>;
@@ -23,10 +25,7 @@ export class InvalidCategoryError extends Error {
   }
 }
 
-export async function listExpenses(
-  userId: number,
-  filters: ExpenseFilters = {},
-) {
+export async function listExpenses(userId: number, filters: ExpenseFilters) {
   const where: Prisma.ExpenseWhereInput = { userId };
 
   if (filters.categoryId !== undefined) {
@@ -45,11 +44,22 @@ export async function listExpenses(
     };
   }
 
-  const expenses = await prisma.expense.findMany({
-    where,
-    orderBy: [{ date: "desc" }, { id: "desc" }],
-  });
-  return expenses.map(toResponse);
+  const [expenses, total] = await Promise.all([
+    prisma.expense.findMany({
+      where,
+      orderBy: [{ date: "desc" }, { id: "desc" }],
+      skip: (filters.page - 1) * filters.limit,
+      take: filters.limit,
+    }),
+    prisma.expense.count({ where }),
+  ]);
+
+  return {
+    items: expenses.map(toResponse),
+    page: filters.page,
+    limit: filters.limit,
+    total,
+  };
 }
 
 export async function getExpense(userId: number, id: number) {

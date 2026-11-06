@@ -50,6 +50,21 @@ so `Food`, `food`, and ` Food ` count as the same name.
 
 - `month=YYYY-MM` filters expenses to a calendar month, such as `month=2026-10`; an invalid month returns 400.
 - `categoryId=3` filters expenses to the specified category ID; an invalid ID returns 400.
+- `page=1` selects the page; must be a positive integer. Defaults to `1`.
+- `limit=20` sets the number of expenses per page; must be a positive integer, up to `100`. Defaults to `20`.
+
+The `GET /expenses` response is paginated:
+
+```json
+{
+  "items": [],
+  "page": 1,
+  "limit": 20,
+  "total": 0
+}
+```
+
+`items` contains the expenses for the requested page, and `total` is the number of matching expenses across all pages.
 
 ### Data shapes and required fields
 
