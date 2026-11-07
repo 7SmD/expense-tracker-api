@@ -59,3 +59,7 @@ be.
 
 Our Zod expense schema strips unknown body fields by default instead of rejecting
 the request; for example, an extra `hacker` field is ignored and not stored.
+
+- A test only proves something if I've seen it fail when the code is wrong.
+- Assert the response status before using anything from its body.
+- Paginated sorting needs a unique tie-breaker; sorting only by date can put equal-date rows on the wrong page.

@@ -29,6 +29,19 @@ Backend for tracking expenses. Work in progress.
 
 Next time, just run `docker start expense-db` and `npm run dev`.
 
+## Running tests
+
+1. Create the test database:
+   ```bash
+   docker exec -it expense-db psql -U postgres -c "CREATE DATABASE expense_api_test;"
+   ```
+2. Copy the test environment file: `cp .env.test.example .env.test`
+3. Apply migrations to the test database:
+   ```bash
+   DATABASE_URL="postgresql://postgres:devpassword@localhost:5432/expense_api_test" npx prisma migrate deploy
+   ```
+4. Run the tests: `npm test`
+
 ## Endpoints
 
 | Method | URL | What it does | Success | Errors |
